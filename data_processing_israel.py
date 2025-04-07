@@ -7,46 +7,46 @@ import time
 from tweepy.errors import TooManyRequests
 
 
-def safe_search_tweets(query, count):
-    while True:
-        try:
-            tweets = client.search_recent_tweets(
-                query=query,
-                max_results=count,
-                tweet_fields=["created_at", "text", "public_metrics"]
-            )
-            return tweets
-        except TooManyRequests:
-            print("⚠️ Twitter rate limit exceeded. Waiting 15 minutes before retrying...")
-            time.sleep(900)
+# def safe_search_tweets(query, count):
+#     while True:
+#         try:
+#             tweets = client.search_recent_tweets(
+#                 query=query,
+#                 max_results=count,
+#                 tweet_fields=["created_at", "text", "public_metrics"]
+#             )
+#             return tweets
+#         except TooManyRequests:
+#             print("⚠️ Twitter rate limit exceeded. Waiting 15 minutes before retrying...")
+#             time.sleep(900)
 
-
-# access to the word file that we did on the Participants of big brother Israel
-file_path = "big_brother_israel_new.docx"
-doc = docx.Document(file_path)
-
-# check the tables in the file
-tables = doc.tables
-if not tables:
-    print("there is no tables in the file")
-    exit()
-
-# read the tables
-all_data = []
-for table_index, table in enumerate(tables):
-    table_data = []
-
-    # read the lines
-    for row in table.rows:
-        table_data.append([cell.text.strip() for cell in row.cells])  # delete un relevant spaces
-    df = pd.DataFrame(table_data)
-    # add a col that will mention from which number of table the data came from
-    df["table_index"] = table_index + 1
-    all_data.append(df)
-final_df = pd.concat(all_data, ignore_index=True)
-# save to CSV
-csv_file_path = "big_brother_israel.csv"
-final_df.to_csv(csv_file_path, index=False, encoding="utf-8")
+#
+# # access to the word file that we did on the Participants of big brother Israel
+# file_path = "big_brother_israel_new.docx"
+# doc = docx.Document(file_path)
+#
+# # check the tables in the file
+# tables = doc.tables
+# if not tables:
+#     print("there is no tables in the file")
+#     exit()
+#
+# # read the tables
+# all_data = []
+# for table_index, table in enumerate(tables):
+#     table_data = []
+#
+#     # read the lines
+#     for row in table.rows:
+#         table_data.append([cell.text.strip() for cell in row.cells])  # delete un relevant spaces
+#     df = pd.DataFrame(table_data)
+#     # add a col that will mention from which number of table the data came from
+#     df["table_index"] = table_index + 1
+#     all_data.append(df)
+# final_df = pd.concat(all_data, ignore_index=True)
+# # save to CSV
+# csv_file_path = "big_brother_israel.csv"
+# final_df.to_csv(csv_file_path, index=False, encoding="utf-8")
 
 
 load_dotenv()
@@ -59,7 +59,7 @@ query_for_ISRAEL = '"האח הגדול" -is:retweet lang:he'
 tweet_count_ISRAEL = 100
 
 # take out the posts by the query big brother, by the number of tweets that we want and by the fields
-tweets = safe_search_tweets(query_for_ISRAEL, tweet_count_ISRAEL)
+tweets = client.search_recent_tweets(query=query_for_ISRAEL, max_results= tweet_count_ISRAEL, tweet_fields=["created_at", "text", "like_count",  "retweet_count"])
 
 # processing and save data
 tweet_data_ISRAEL = []

@@ -19,30 +19,29 @@ def safe_search_tweets(query, count):
             print("⚠️ Twitter rate limit exceeded. Waiting 15 minutes before retrying...")
             time.sleep(900)
 
-
-file_path = "big_brother_usa.csv"
-try:
-    data = pd.read_csv(file_path)
-    print("Data loaded successfully!")
-except FileNotFoundError:
-    print(f"Error: File '{file_path}' not found.")
-    exit()
-
-print("Sample data:")
-print(data.head())
-
-
-def load_env(file_path=".env"):
-    try:
-        with open(file_path) as f:
-            for line in f:
-                if not line.strip() or line.startswith("#"):
-                    continue
-                key, value = line.strip().split("=", 1)
-                os.environ[key] = value
-    except FileNotFoundError:
-        print(f"Error: .env file not found at {file_path}")
-        exit()
+# file_path = "big_brother_usa.csv"
+# try:
+#     data = pd.read_csv(file_path)
+#     print("Data loaded successfully!")
+# except FileNotFoundError:
+#     print(f"Error: File '{file_path}' not found.")
+#     exit()
+#
+# print("Sample data:")
+# print(data.head())
+#
+#
+# def load_env(file_path=".env"):
+#     try:
+#         with open(file_path) as f:
+#             for line in f:
+#                 if not line.strip() or line.startswith("#"):
+#                     continue
+#                 key, value = line.strip().split("=", 1)
+#                 os.environ[key] = value
+#     except FileNotFoundError:
+#         print(f"Error: .env file not found at {file_path}")
+#         exit()
 
 
 load_dotenv()

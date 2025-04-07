@@ -1,54 +1,77 @@
-import pandas as pd
-from textblob import TextBlob
+import sns
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
-import random
+from textblob import TextBlob
+from xgboost import XGBClassifier
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
-contestants = pd.read_csv("big_brother_usa.csv")
+participants = pd.read_csv("big_brother_usa.csv")
 tweets = pd.read_csv("big_brother_tweets_USA.csv")
-
-#the full name consists in the csv first and last name
-contestants["full_name"] = contestants["first"].astype(str) + " " + contestants["last"].astype(str)
-
-#setiment for every contestant. between -1 to 1. close to 1- positive, close to -1- negative
+participants["full name"] = participants["first"] + " " + participants["last"]
 tweets["sentiment"] = tweets["text"].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
 
 
-#match the twitts to the contestants by name
-def match_contestant(text, contestant_names):
-    for name in contestant_names:
+def matching_name_in_tweets(text, names):
+    for name in names:
         if pd.isna(name):
             continue
-        #turn the name to lower and the twit
         if str(name).lower() in str(text).lower():
             return name
-    return None
+        return None
 
 
-tweets["username"] = tweets["text"].apply(lambda x: match_contestant(x, contestants["full_name"]))
-tweets_filtered = tweets.dropna(subset=["username"])
+tweets["userName"] = tweets["text"].apply(lambda x: matching_name_in_tweets(str(x), participants["full name"]))
+filtered_tweets = tweets.dropna(
+    subset=["userName"])  #check every row in tweets, if the value user name is Nan- then drop
 
-avg_sentiment = tweets_filtered.groupby("username")["sentiment"].mean().reset_index()
-avg_sentiment.columns = ["full_name", "avg_sentiment"]
+avg_sentiment = filtered_tweets.groupby("userName")["sentiment"].mean()
+avg_sentiment.columns = ["avg_sentiment"].fillna(0)
 
-#merge the name and the avg sentiment
-data = contestants.merge(avg_sentiment, on="full_name", how="left")
-data["avg_sentiment"] = data["avg_sentiment"].fillna(0)
+mergeSentimentToParticipants = participants.merge(avg_sentiment, on="full name", how="left")
+mergeSentimentToParticipants["eliminated"] = mergeSentimentToParticipants["final_placement"].apply(
+    lambda x: 1 if x > 1 else 0)
+orderOfElimination = mergeSentimentToParticipants.sort_values("final_placement").reset_index(drop=True)
+num_weeks = 7
+divide_participants = len(orderOfElimination) // num_weeks
+allTrue = []
+allPred = []
+for i in range(num_weeks):
+    start = i * divide_participants
+    end = start + divide_participants
+    week_data = orderOfElimination.iloc[start:end]
 
-#add col. who won is 1. the contestants that finished not in the first place tag 0
-data["eliminated"] = data["final_placement"].apply(lambda x: 1 if x > 1 else 0)
+    X = week_data[["age", "avg_sentiment"]].dropna()
+    y = week_data.loc[X.index, "eliminated"]
 
-X = data[["age", "avg_sentiment"]].dropna()
-y = data.loc[X.index, "eliminated"]
+    if len(y.unique()) < 2:
+        continue
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+    model = XGBClassifier(n_estimators=100, max_depth=3, use_label_encoder=False, eval_metric='logloss')
+    model.fit(X_train, y_train)
 
-y_pred = model.predict(X_test)
+    y_pred = model.predict(X_test)
+    allTrue.extend(y_test)
+    allPred.extend(y_pred)
 
-print("\n Model accuracy: ", accuracy_score(y_test, y_pred))
+# Accuracy and classification report
+print("\nModel accuracy:", accuracy_score(allTrue, allPred))
 print("\nClassification report:")
-print(classification_report(y_test, y_pred))
+print(classification_report(allTrue, allPred))
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(allTrue, allPred)
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("True")
+plt.show()
+
+# Precision – כמה תחזיות של "הודח" היו נכונות
+#
+# Recall – כמה מתוך כל המודחים זוהו
+#
+# F1-score – ממוצע בין שניהם
