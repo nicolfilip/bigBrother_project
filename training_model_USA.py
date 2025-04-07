@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import random
 
-name = 1
+name = 12
 contestants = pd.read_csv("big_brother_usa.csv")
 tweets = pd.read_csv("big_brother_tweets_USA.csv")
 
