@@ -1,57 +1,77 @@
+import docx
 import pandas as pd
 import tweepy
 import os
-import time
 from dotenv import load_dotenv
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import time
+from tweepy.errors import TooManyRequests
 
-# הגדרת משתנים
+
+# def safe_search_tweets(query, count):
+#     while True:
+#         try:
+#             tweets = client.search_recent_tweets(
+#                 query=query,
+#                 max_results=count,
+#                 tweet_fields=["created_at", "text", "public_metrics"]
+#             )
+#             return tweets
+#         except TooManyRequests:
+#             print("⚠️ Twitter rate limit exceeded. Waiting 15 minutes before retrying...")
+#             time.sleep(900)
+
+#
+# # access to the word file that we did on the Participants of big brother Israel
+# file_path = "big_brother_israel_new.docx"
+# doc = docx.Document(file_path)
+#
+# # check the tables in the file
+# tables = doc.tables
+# if not tables:
+#     print("there is no tables in the file")
+#     exit()
+#
+# # read the tables
+# all_data = []
+# for table_index, table in enumerate(tables):
+#     table_data = []
+#
+#     # read the lines
+#     for row in table.rows:
+#         table_data.append([cell.text.strip() for cell in row.cells])  # delete un relevant spaces
+#     df = pd.DataFrame(table_data)
+#     # add a col that will mention from which number of table the data came from
+#     df["table_index"] = table_index + 1
+#     all_data.append(df)
+# final_df = pd.concat(all_data, ignore_index=True)
+# # save to CSV
+# csv_file_path = "big_brother_israel.csv"
+# final_df.to_csv(csv_file_path, index=False, encoding="utf-8")
+
+
 load_dotenv()
 bearer_token = os.getenv("BEARER_TOKEN")
+
+# register to twitter API V2
 client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=True)
-
+# search posts on big brother ISRAEL
 query_for_ISRAEL = '"האח הגדול" -is:retweet lang:he'
-tweet_count_ISRAEL = 5 # המינימום המותר הוא 10, המקסימום 100
+tweet_count_ISRAEL = 1
 
-# שליפת ציוצים עם טיפול ב-Rate Limit
-def safe_search_tweets(query, count):
-    while True:
-        try:
-            return client.search_recent_tweets(
-                query=query,
-                max_results=count,
-                tweet_fields=["created_at", "text", "public_metrics"]
-            )
-        except tweepy.TooManyRequests:
-            print("⚠️ Rate limit hit. Waiting 15 minutes...")
-            time.sleep(900)
-        except Exception as e:
-            print("שגיאה:", e)
-            break
+# take out the posts by the query big brother, by the number of tweets that we want and by the fields
+tweets = client.search_recent_tweets(query=query_for_ISRAEL, max_results=tweet_count_ISRAEL, tweet_fields=["created_at", "text", "public_metrics"])
 
-# הרצת השאילתה
-tweets = safe_search_tweets(query_for_ISRAEL, tweet_count_ISRAEL)
+# processing and save data
+tweet_data_ISRAEL = []
+for tweet in tweets.data:
+    (tweet_data_ISRAEL.append([
+        tweet.created_at, tweet.text,
+        tweet.public_metrics["like_count"],  # number of likes
+        tweet.public_metrics["retweet_count"]
+    ]))
 
-# עיבוד הציוצים
-tweet_data = []
-if tweets and tweets.data:
-    for tweet in tweets.data:
-        tweet_data.append([
-            tweet.created_at,
-            tweet.text,
-            tweet.public_metrics["like_count"],
-            tweet.public_metrics["retweet_count"]
-        ])
+# make table from the data
+df_israel = pd.DataFrame(tweet_data_ISRAEL, columns=["timestamp", "text", "likes", "retweets"])
+df_israel.to_csv("big_brother_tweets_ISRAEL.csv", index=False, encoding="utf-8")
 
-    df = pd.DataFrame(tweet_data, columns=["timestamp", "text", "likes", "retweets"])
-
-    # ניתוח סנטימנט
-    analyzer = SentimentIntensityAnalyzer()
-    df["sentiment"] = df["text"].apply(lambda x: analyzer.polarity_scores(str(x))['compound'])
-
-    # שמירת קובץ
-    df.to_csv("big_brother_tweets_ISRAEL.csv", index=False, encoding="utf-8")
-    print("🎉 success! נשמר קובץ: big_brother_tweets_ISRAEL.csv")
-
-else:
-    print("😕 לא נמצאו ציוצים מתאימים.")
+print("success")
