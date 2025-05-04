@@ -1,0 +1,9 @@
+from,to,sentiment,weight
+Talia Ovadia,Bar Cohen,negative,4
+Nathanel Rudnitsky,Diane Schwartz,positive,2
+Eliyav Tati,Bar Cohen,positive,5
+Talia Ovadia,Shahaf Raz,positive,5
+Sharin Avraham,Shahaf Raz,negative,2
+Bar Cohen,Riwaa Raslan,positive,4
+Ofek Levi,Talia Ovadia,positive,2
+Daniel Malka,Shahaf Raz,negative,2
