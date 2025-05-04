@@ -199,48 +199,37 @@ top_10 = ranking[["full_name", "final_placement", "avg_sentiment", "predicted_sc
 print(top_10)
 
 # ------------------------
-# 7. גרף קשרים
+# 7. גרף קשרים ידני מקובץ CSV
 # ------------------------
 
-# יצירת תיקייה אם לא קיימת
-if not os.path.exists("graph_output"):
-    os.makedirs("graph_output")
+# טען את קובץ הקשרים הידני שיצרת
+manual_edges = pd.read_csv("graph_output/Untitled spreadsheet - Sheet1.csv")
 
-# זיהוי קשרים
-edges = []
-for _, tweet in tweets.iterrows():
-    mentioned = [name for name in contestants["full_name"] if pd.notna(name) and str(name) in tweet["text"]]
-    if len(mentioned) >= 2:
-        for pair in combinations(mentioned, 2):
-            edges.append({
-                "from": pair[0],
-                "to": pair[1],
-                "weight": abs(tweet["sentiment"]),
-                "type": "positive" if tweet["sentiment"] > 0 else "negative"
-            })
+# יצירת הגרף
+G = nx.Graph()
 
-# המרה לדאטהפריים
-edges_df = pd.DataFrame(edges)
+# הוספת הקשרים לגרף
+for _, row in manual_edges.iterrows():
+    G.add_edge(row["from"], row["to"], weight=row["weight"], sentiment=row["sentiment"])
 
-# שמירה ל-CSV
-edges_df.to_csv("graph_output/israel_graph_edges.csv", index=False, encoding="utf-8")
+# הגדרות צבעים לפי סנטימנט
+edge_colors = ["green" if G[u][v]["sentiment"] == "positive" else "red" for u, v in G.edges()]
 
-# ציור הגרף
-if not edges_df.empty:
-    G = nx.Graph()
+# ציור
+pos = nx.spring_layout(G, seed=42)
+plt.figure(figsize=(16, 10))
+nx.draw(
+    G, pos,
+    with_labels=True,
+    edge_color=edge_colors,
+    node_color="lightblue",
+    node_size=1500,
+    font_size=10,
+    width=2
+)
+plt.title("גרף קשרים ידני – עונה 12")
+plt.savefig("graph_output/bigbrother_manual_graph.png", dpi=300)
+plt.show()
 
-    for _, row in edges_df.iterrows():
-        G.add_edge(row["from"], row["to"], weight=row["weight"], sentiment=row["type"])
-
-    pos = nx.spring_layout(G, seed=42)
-    edge_colors = ['green' if G[u][v]['sentiment'] == 'positive' else 'red' for u, v in G.edges()]
-
-    plt.figure(figsize=(16, 10))
-    nx.draw(G, pos, with_labels=True, edge_color=edge_colors, node_color='skyblue', node_size=1500, font_size=10, width=2)
-    plt.title("גרף קשרים בין מתמודדי האח הגדול")
-    plt.savefig("graph_output/bigbrother_graph.png", dpi=300)
-    plt.show()
-    print("גרף שמור ב-graph_output/bigbrother_graph.png")
-else:
-    print("אין קשרים מספיקים ליצירת גרף 📭")
+print("גרף שמור כקובץ: graph_output/bigbrother_manual_graph.png")
 
