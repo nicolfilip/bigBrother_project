@@ -1,12 +1,19 @@
 from,to,sentiment,weight
 Talia Ovadia,Bar Cohen,negative,4
-Nathanel Rudnitsky,Diane Schwartz,positive,2
-Eliyav Tati,Bar Cohen,positive,5
-Talia Ovadia,Shahaf Raz,positive,5
-Sharin Avraham,Shahaf Raz,negative,2
+Bar Cohen,Talia Ovadia,negative,4
+Nathanel Rudnitsky,Diane Schwartz,romantic,2
+Diane Schwartz,Nathanel Rudnitsky,romantic,2
+Eliyav Tati,Bar Cohen,romantic,5
+Bar Cohen,Eliyav Tati,romantic,5
+Talia Ovadia,Shahaf Raz,romantic,5
+Shahaf Raz,Talia Ovadia,romantic,5
+Sharin Avraham,Shahaf Raz,netural,2
 Bar Cohen,Riwaa Raslan,positive,4
-Ofek Levi,Talia Ovadia,positive,2
+Ofek Levi,Talia Ovadia,romantic,2
 Daniel Malka,Shahaf Raz,negative,2
 Bar Cohen,Diane Schwartz,negative,2
 Ilana Ternenko,Daniel Malka,positive,4
 Shahaf Raz,Daniel Malka,negative,6
+Sharin Avraham,Talia Ovadia,negative,5
+Bar Cohen,Kazem Khaliliya,netural,4
+Moshe Kugman,Sharin Avraham,romantic,4
