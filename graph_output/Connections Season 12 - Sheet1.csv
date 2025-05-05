@@ -1,0 +1,9 @@
+from,to,sentiment,weight
+טליה עובדיה,בר כהן,negative,4
+נתנאל רודניצקי,דיאן שוורץ,positive,2
+אליאב טעטי,בר כהן,positive,5
+טליה עובדיה,שחף רז,positive,5
+שרין אברהם,שחף רז,negative,2
+בר כהן,ריוואה רסלאן,positive,4
+אופק לוי,טליה עובדיה,positive,2
+דניאל מלכה,שחף רז,negative,2
