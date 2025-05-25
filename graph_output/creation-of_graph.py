@@ -4,10 +4,6 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
-# ------------------------
-# גרף קשרים ידני מקובץ CSV
-# ------------------------
-
 # טען את קובץ הקשרים
 manual_edges = pd.read_csv("Untitled spreadsheet - Sheet1.csv")
 
