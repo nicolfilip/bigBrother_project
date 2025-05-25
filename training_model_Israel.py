@@ -16,7 +16,7 @@ tweets = pd.read_csv("big_brother_tweets_ISRAEL.csv")
 df["full_name"] = df["שם מלא"].astype(str)
 
 # Load graph
-edges_df = pd.read_csv("graph_output/Untitled spreadsheet - Sheet1.csv")
+edges_df = pd.read_csv("graph_output/graph_heb.csv")
 G = nx.DiGraph()
 for _, row in edges_df.iterrows():
     G.add_edge(row["from"], row["to"], weight=row["weight"], sentiment=row["sentiment"])
