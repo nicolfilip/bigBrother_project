@@ -1,0 +1,42 @@
+from,to,sentiment,weight
+Maor Bruchman,May Erev,negative,5
+May Erev,Maor Bruchman,negative,5
+Maor Bruchman,Dror Clear,positive,8
+Dror Clear,Maor Bruchman,positive,8
+Maor Bruchman,Shani Edri,negative,8
+Shani Edri,Maor Bruchman,negative,8
+Dror Clear,Shani Edri,negative,3
+Shani Edri,Dror Clear,negative,5
+Tirza Cohen,Erez Isakov,romantic,5
+Erez Isakov,Tirza Cohen,romantic,5
+Lauren Gozlan,Maor Bruchman,positive,5
+Maor Bruchman,Lauren Gozlan,positive,5
+Erez Isakov,Erez Mughrabi,positive,8
+Erez Mughrabi,Erez Isakov,positive,8
+Shelly Sandrov,Shelly Ebenstein,positive,5
+Shelly Ebenstein,Shelly Sandrov,positive,5
+Anna Sophia Kalman,May Erev,positive,5
+May Erev,Anna Sophia Kalman,positive,5
+Shani Edri,Lauren Gozlan,negative,5
+Lauren Gozlan,Shani Edri,negative,5
+Chen Kraunick,May Erev,negative,5
+May Erev,Chen Kraunick,negative,5
+Yuval Levi,Shani Edri,positive,6
+Shani Edri,Yuval Levi,positive,6
+Elaya Hof,Maor Bruchman,negative,4
+Shelly Ebenstein,Maor Bruchman,negative,4
+Erez Mughrabi,Maor Bruchman,positive,5
+Maor Bruchman,Erez Mughrabi,positive,5
+Maor Bruchman,Erez Isakov,positive,5
+Erez Isakov,Maor Bruchman,positive,5
+Netanel Dahan,Maor Bruchman,netural,5
+Netanel Dahan,Dror Clear,netural,5
+Elaya Hof,Netanel Dahan,positive,5
+Elaya Hof,Anna Sophia Kalman,positive,5
+Yarden Edri,Lauren Gozlan,negative,4
+Lauren Gozlan,Yarden Edri,negative,4
+Shelly Sandrov,Erez Isakov,romantic,6
+Erez Isakov,Shelly Sandrov,positive,4
+Shelly Sandrov,Elaya Hof,negative,2
+Elaya Hof, Shelly Sandrov, negative,6
+

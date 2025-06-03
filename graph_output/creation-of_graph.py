@@ -4,15 +4,13 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
-# טען את קובץ הקשרים
-manual_edges = pd.read_csv("Untitled spreadsheet - Sheet1.csv")
+manual_edges = pd.read_csv("graph_heb.csv")
 
-# יצירת גרף מכוון (חד כיווני)
 G = nx.DiGraph()
 
-# הוספת הקשרים לגרף
 for _, row in manual_edges.iterrows():
-    G.add_edge(row["from"], row["to"], weight=row["weight"], sentiment=row["sentiment"])
+    G.add_edge(row["from"], row["to"], weight=float(row["weight"]), sentiment=row["sentiment"])
+
 
 # פונקציה לקביעת צבע לפי סוג הקשר
 def get_edge_color(sentiment):
@@ -44,7 +42,7 @@ nx.draw(
     arrowsize=20
 )
 
-plt.title("גרף קשרים ידני – עונה 12")
+plt.title("גרף קשרים ידני – עונה 15")
 plt.savefig("bigbrother_manual_graph.png", dpi=300)
 plt.show()
 

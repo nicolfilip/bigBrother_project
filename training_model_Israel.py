@@ -10,12 +10,20 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from xgboost import XGBRanker
 import networkx as nx
 
-# Load datasets
+# === Step 1: get nominees from user ===
+print("\n🗳️ Enter the 6 nominees for eviction:")
+nominees = []
+while len(nominees) < 6:
+    name = input(f"Nominee {len(nominees)+1}: ").strip()
+    if name:
+        nominees.append(name)
+
+# === Step 2: Load data ===
 df = pd.read_csv("big_brother_israel_new_new.csv")
 tweets = pd.read_csv("big_brother_tweets_ISRAEL.csv")
 df["full_name"] = df["שם מלא"].astype(str)
 
-# Load graph
+# === Step 3: Build graph from edges ===
 edges_df = pd.read_csv("graph_output/graph_heb.csv")
 G = nx.DiGraph()
 for _, row in edges_df.iterrows():
@@ -46,7 +54,7 @@ social_df = pd.DataFrame({"full_name": list(df["full_name"])}).assign(
 )
 df = df.merge(social_df, on="full_name", how="left")
 
-# Core cleaning
+# Clean fields
 df["Days in game"] = pd.to_numeric(df["Days in game"], errors="coerce")
 df["week eliminated"] = pd.to_numeric(df["week eliminated"], errors="coerce")
 df["entered week"] = pd.to_numeric(df["entered week"], errors="coerce")
@@ -70,7 +78,6 @@ def match_contestant(text, contestant_names):
 tweets["username"] = tweets["text"].apply(lambda x: match_contestant(x, df["full_name"]))
 tweets_filtered = tweets.dropna(subset=["username"])
 
-# Merge tweet sentiment features
 if not tweets_filtered.empty:
     avg_sentiment = tweets_filtered.groupby("username")["sentiment"].mean().reset_index(name="avg_sentiment")
     mention_counts = tweets_filtered["username"].value_counts().reset_index()
@@ -86,8 +93,6 @@ else:
     df["sentiment_std"] = 0
 
 df[["avg_sentiment", "mention_count", "sentiment_std"]] = df[["avg_sentiment", "mention_count", "sentiment_std"]].fillna(0)
-
-# Make sure 'גיל' is numeric
 df["גיל"] = pd.to_numeric(df["גיל"], errors="coerce")
 
 # Add noise
@@ -98,7 +103,7 @@ for col, strength in noise_strength.items():
         df[col] = pd.to_numeric(df[col], errors="coerce")
         df[col] += np.random.normal(0, strength, size=len(df))
 
-# Model
+# Feature selection
 features = [
     "גיל", "gender_encoded", "status_encoded", "is_vip",
     "avg_sentiment", "mention_count", "sentiment_std",
@@ -115,6 +120,7 @@ X = df_train[features]
 y = df_train["rank_score"]
 groups = df_train["season_id"]
 
+# Cross-validation
 cv = GroupKFold(n_splits=5)
 scores = []
 preds_all, true_all = [], []
@@ -132,22 +138,22 @@ for train_idx, test_idx in cv.split(X, y, groups):
     true_all.extend(y_test.values)
     scores.append(ndcg_score([y_test.values], [preds]))
 
-print("Average nDCG across folds:", np.mean(scores))
+print(f"\n✅ Average nDCG across folds: {np.mean(scores):.4f}")
 
-# Prediction for season 15
-season_15_df = df_predict[df_predict["עונה"] == "15"].copy()
+# Prediction: only for nominees in Season 15
+season_15_df = df_predict[(df_predict["עונה"] == "15") & (df_predict["full_name"].isin(nominees))].copy()
 if not season_15_df.empty:
     X_alive = season_15_df[features]
     preds_alive = model.predict(X_alive)
     season_15_df["predicted_score"] = preds_alive
     eliminated_next = season_15_df.loc[season_15_df["predicted_score"].idxmin()]
-    print(f"\n🔮 Predicted next to be eliminated in Season 15: {eliminated_next['full_name']}")
-    print("\n📋 Top 3 candidates at risk:")
-    print(season_15_df.sort_values("predicted_score")[['full_name', 'predicted_score']].head(3))
+    print(f"\n🔮 Predicted next to be eliminated: {eliminated_next['full_name']}")
+    print("\n📋 Ranking of nominees:")
+    print(season_15_df.sort_values("predicted_score")[['full_name', 'predicted_score']])
 else:
-    print("⚠️ No active candidates found for season 15")
+    print("\n⚠️ No valid nominees found in Season 15.")
 
-# Plot
+# Visualization
 plt.figure(figsize=(10, 6))
 plt.scatter(true_all, preds_all, alpha=0.6)
 plt.xlabel("True Rank Score")
@@ -156,4 +162,3 @@ plt.title("Predicted vs. True Rank Scores")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
-
