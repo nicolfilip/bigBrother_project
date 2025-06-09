@@ -8,6 +8,7 @@ from sklearn.model_selection import GroupKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import ndcg_score
 from xgboost import XGBRanker
+from lightgbm import LGBMRanker
 import networkx as nx
 from transformers import pipeline
 
@@ -150,15 +151,23 @@ for train_idx, test_idx in cv.split(X, y, groups):
     y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
     group_train = df_train.iloc[train_idx].groupby("season_id").size().to_list()
 
-    model = XGBRanker(objective="rank:pairwise", n_estimators=100, random_state=42)
-    model.fit(X_train, y_train, group=group_train)
+    xgb_model = XGBRanker(objective="rank:pairwise", n_estimators=100, random_state=42)
+    xgb_model.fit(X_train, y_train, group=group_train)
 
-    preds = model.predict(X_test)
+    preds = xgb_model.predict(X_test)
     preds_all.extend(preds)
     true_all.extend(y_test.values)
     scores.append(ndcg_score([y_test.values], [preds]))
 
-print("Average nDCG across folds:", np.mean(scores))
+print("Average nDCG across folds (XGB):", np.mean(scores))
+
+# --- סטאקינג עם LightGBM --- #
+X_train_stacked = X.copy()
+X_train_stacked["xgb_predicted"] = xgb_model.predict(X)
+
+lgbm_model = LGBMRanker(objective="lambdarank", n_estimators=100, random_state=42)
+groups_lgb = df_train.groupby("season_id").size().to_list()
+lgbm_model.fit(X_train_stacked, y, group=groups_lgb)
 
 # --- חיזוי על עונה 15 --- #
 season_15_df = df_predict[df_predict["עונה"] == "15"].copy()
@@ -166,8 +175,12 @@ season_15_df = season_15_df[season_15_df["full_name"].isin(nominees)]
 
 if not season_15_df.empty:
     X_alive = season_15_df[features]
-    preds_alive = model.predict(X_alive)
+    X_alive = X_alive.copy()
+    X_alive["xgb_predicted"] = xgb_model.predict(X_alive)
+
+    preds_alive = lgbm_model.predict(X_alive)
     season_15_df["predicted_score"] = preds_alive
+
     eliminated_next = season_15_df.loc[season_15_df["predicted_score"].idxmin()]
     print(f"\nPredicted next to be eliminated in Season 15: {eliminated_next['full_name']}")
     print("\nTop 3 candidates at risk:")
@@ -180,7 +193,7 @@ plt.figure(figsize=(10, 6))
 plt.scatter(true_all, preds_all, alpha=0.6)
 plt.xlabel("True Rank Score")
 plt.ylabel("Predicted")
-plt.title("Predicted vs. True Rank Scores")
+plt.title("Predicted vs. True Rank Scores (XGB Only)")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
