@@ -12,7 +12,7 @@ import networkx as nx
 from transformers import pipeline
 
 # --- טעינת הדאטה --- #;
-print("1")
+print("2")
 
 # נתוני משתתפים
 df = pd.read_csv("big_brother_israel_new_new.csv")
