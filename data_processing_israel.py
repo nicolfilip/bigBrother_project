@@ -66,7 +66,7 @@ bearer_token = os.getenv("BEARER_TOKEN")
 client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=True)
 # search posts on big brother ISRAEL
 query_for_ISRAEL = '"האח הגדול" -is:retweet lang:he'
-tweet_count_ISRAEL = 100
+tweet_count_ISRAEL = 500
 
 # take out the posts by the query big brother, by the number of tweets that we want and by the fields
 tweets = client.search_recent_tweets(query=query_for_ISRAEL, max_results=tweet_count_ISRAEL, tweet_fields=["created_at", "text", "public_metrics"])
