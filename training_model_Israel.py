@@ -11,8 +11,13 @@ from xgboost import XGBRanker
 import networkx as nx
 from transformers import pipeline
 
-# --- טעינת הדאטה --- #;
-print("2")
+# --- טעינת הדאטה --- #
+print("\nEnter the 6 nominees for eviction:")
+nominees = []
+while len(nominees) < 6:
+    name = input(f"Nominee {len(nominees)+1}: ").strip()
+    if name:
+        nominees.append(name)
 
 # נתוני משתתפים
 df = pd.read_csv("big_brother_israel_new_new.csv")
@@ -25,12 +30,10 @@ tweets = pd.read_csv("big_brother_tweets_ISRAEL.csv")
 edges_df = pd.read_csv("graph_output/Untitled spreadsheet - Sheet1.csv")
 
 # --- בניית גרף חברתי --- #
-
 G = nx.DiGraph()
 for _, row in edges_df.iterrows():
     G.add_edge(row["from"], row["to"], weight=row["weight"], sentiment=row["sentiment"])
 
-# חישוב מאפייני גרף
 pagerank = nx.pagerank(G)
 betweenness = nx.betweenness_centrality(G)
 closeness = nx.closeness_centrality(G)
@@ -45,7 +48,6 @@ for u, v, d in G.edges(data=True):
     if sentiment in sentiment_weights:
         sentiment_weights[sentiment][u] = sentiment_weights[sentiment].get(u, 0) + weight
 
-# בניית DataFrame חברתי
 social_df = pd.DataFrame({"full_name": df["full_name"]}).assign(
     pagerank=lambda x: x["full_name"].map(pagerank).fillna(0),
     betweenness=lambda x: x["full_name"].map(betweenness).fillna(0),
@@ -59,40 +61,32 @@ social_df = pd.DataFrame({"full_name": df["full_name"]}).assign(
 df = df.merge(social_df, on="full_name", how="left")
 
 # --- ניקוי ויצירת פיצ'רים --- #
-
-# הפיכת עמודות למספריות
 df["Days in game"] = pd.to_numeric(df["Days in game"], errors="coerce")
 df["week eliminated"] = pd.to_numeric(df["week eliminated"], errors="coerce")
 df["entered week"] = pd.to_numeric(df["entered week"], errors="coerce")
 df["rank_score"] = df["week eliminated"] - df["entered week"]
 
-# קידוד מגדר, סטטוס, VIP
 df["gender_encoded"] = df["מין"].map({"ז": 1, "נ": 0})
 df["status_encoded"] = df["סטטוס"].astype(str).apply(lambda s: 1 if "נשוי" in s else 0)
 df["is_vip"] = df["שם מלא"].astype(str).apply(lambda x: 1 if "VIP" in x or "מהעונה" in x else 0)
 
-# קידוד עונה
 df["season_id"] = LabelEncoder().fit_transform(df["עונה"])
 
 # --- ניתוח סנטימנט בעברית עם HeBERT --- #
-
-print("🔍 Loading HeBERT sentiment model... (one-time download)")
+print("Loading HeBERT sentiment model...")
 sentiment_pipeline = pipeline("sentiment-analysis", model="avichr/heBERT_sentiment_analysis")
 
-# פונקציה להערכת סנטימנט על ציוץ
 def get_sentiment(text):
     try:
-        result = sentiment_pipeline(text[:512])  # חיתוך ל-512 תווים
+        result = sentiment_pipeline(text[:512])
         label = result[0]['label']
-        # נתרגם ל-POSITIVE/NEGATIVE מספרי
         return 1 if label == "Positive" else -1
     except:
-        return 0  # במקרה של שגיאה
+        return 0
 
 tweets["sentiment"] = tweets["text"].apply(get_sentiment)
 
 # --- שיוך ציוצים למתמודדים --- #
-
 def match_contestant(text, contestant_names):
     for name in contestant_names:
         if pd.isna(name):
@@ -105,7 +99,6 @@ tweets["username"] = tweets["text"].apply(lambda x: match_contestant(x, df["full
 tweets_filtered = tweets.dropna(subset=["username"])
 
 # --- בניית פיצ'רים מהציוצים --- #
-
 if not tweets_filtered.empty:
     avg_sentiment = tweets_filtered.groupby("username")["sentiment"].mean().reset_index(name="avg_sentiment")
     mention_counts = tweets_filtered["username"].value_counts().reset_index()
@@ -122,10 +115,8 @@ else:
 
 df[["avg_sentiment", "mention_count", "sentiment_std"]] = df[["avg_sentiment", "mention_count", "sentiment_std"]].fillna(0)
 
-# עמודת גיל
 df["גיל"] = pd.to_numeric(df["גיל"], errors="coerce")
 
-# רעש קל (noise)
 np.random.seed(42)
 noise_strength = {"avg_sentiment": 0.05, "mention_count": 2.0, "sentiment_std": 0.05, "גיל": 0.5}
 for col, strength in noise_strength.items():
@@ -134,7 +125,6 @@ for col, strength in noise_strength.items():
         df[col] += np.random.normal(0, strength, size=len(df))
 
 # --- בניית מודל דירוג --- #
-
 features = [
     "גיל", "gender_encoded", "status_encoded", "is_vip",
     "avg_sentiment", "mention_count", "sentiment_std",
@@ -155,7 +145,6 @@ cv = GroupKFold(n_splits=5)
 scores = []
 preds_all, true_all = [], []
 
-# קרוס ולידציה
 for train_idx, test_idx in cv.split(X, y, groups):
     X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
     y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
@@ -169,24 +158,24 @@ for train_idx, test_idx in cv.split(X, y, groups):
     true_all.extend(y_test.values)
     scores.append(ndcg_score([y_test.values], [preds]))
 
-print("📊 Average nDCG across folds:", np.mean(scores))
+print("Average nDCG across folds:", np.mean(scores))
 
 # --- חיזוי על עונה 15 --- #
-
 season_15_df = df_predict[df_predict["עונה"] == "15"].copy()
+season_15_df = season_15_df[season_15_df["full_name"].isin(nominees)]
+
 if not season_15_df.empty:
     X_alive = season_15_df[features]
     preds_alive = model.predict(X_alive)
     season_15_df["predicted_score"] = preds_alive
     eliminated_next = season_15_df.loc[season_15_df["predicted_score"].idxmin()]
-    print(f"\n🔮 Predicted next to be eliminated in Season 15: {eliminated_next['full_name']}")
-    print("\n📋 Top 3 candidates at risk:")
+    print(f"\nPredicted next to be eliminated in Season 15: {eliminated_next['full_name']}")
+    print("\nTop 3 candidates at risk:")
     print(season_15_df.sort_values("predicted_score")[['full_name', 'predicted_score']].head(3))
 else:
-    print("⚠️ No active candidates found for season 15")
+    print("No nominees matched the contestants.")
 
 # --- גרף תוצאה --- #
-
 plt.figure(figsize=(10, 6))
 plt.scatter(true_all, preds_all, alpha=0.6)
 plt.xlabel("True Rank Score")
