@@ -25,13 +25,12 @@ def show_contestant_image(name):
         image_path = f"images/{name}.{ext}"
         if os.path.isfile(image_path):
             found = True
-            break  # מצאנו קובץ
+            break
 
     if found:
         img = Image.open(image_path)
         plt.imshow(img)
         plt.axis('off')
-        plt.title(f"{name} - Predicted to be Eliminated", fontsize=16)
         plt.show()
     else:
         print(f"לא נמצאה תמונה עבור {name}")
