@@ -2,7 +2,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib
-
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from sklearn.model_selection import GroupKFold
@@ -195,7 +194,7 @@ print("Average nDCG across folds (XGB):", np.mean(scores))
 X_train_stacked = X.copy()
 X_train_stacked["xgb_predicted"] = xgb_model.predict(X)
 
-lgbm_model = LGBMRanker(objective="lambdarank", n_estimators=100, random_state=42)
+lgbm_model = LGBMRanker(objective="lambdarank", n_estimators=100, random_state=42, verbose=-1)
 groups_lgb = df_train.groupby("season_id").size().to_list()
 lgbm_model.fit(X_train_stacked, y, group=groups_lgb)
 
