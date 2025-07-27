@@ -1,4 +1,3 @@
-# ייבוא ספריות
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -15,7 +14,6 @@ from PIL import Image
 import os
 
 
-# פונקציה להצגת תמונה
 def show_contestant_image(name):
     extensions = ['jpg', 'jpeg', 'png', 'webp']
     found = False
@@ -35,25 +33,15 @@ def show_contestant_image(name):
         print(f"לא נמצאה תמונה עבור {name}")
 
 
-# --- טעינת הדאטה --- #
-print("\nEnter the 6 nominees for eviction:")
-nominees = []
-while len(nominees) < 6:
-    name = input(f"Nominee {len(nominees) + 1}: ").strip()
-    if name:
-        nominees.append(name)
 
-# נתוני משתתפים
-df = pd.read_csv("big_brother_israel_new_new.csv")
+
+df = pd.read_csv("../data/big_brother_israel_new_new.csv")
 df["full_name"] = df["שם מלא"].astype(str)
 
-# נתוני ציוצים
-tweets = pd.read_csv("big_brother_tweets_ISRAEL.csv")
+tweets = pd.read_csv("../data/big_brother_tweets_ISRAEL.csv")
 
-# נתוני גרף קשרים
-edges_df = pd.read_csv("graph_output/graph_heb.csv")
+edges_df = pd.read_csv("../graph_output/season15/graph_heb.csv")
 
-# --- בניית גרף חברתי --- #
 G = nx.DiGraph()
 for _, row in edges_df.iterrows():
     G.add_edge(row["from"], row["to"], weight=row["weight"], sentiment=row["sentiment"])
@@ -65,9 +53,9 @@ in_degree = dict(G.in_degree(weight="weight"))
 out_degree = dict(G.out_degree(weight="weight"))
 total_degree = dict(G.degree(weight="weight"))
 
-sentiment_weights = {s: {} for s in ["positive", "negative", "romantic", "netural"]}
+sentiment_weights = {s: {} for s in ["positive", "negative", "romantic", "neutral"]}
 for u, v, d in G.edges(data=True):
-    sentiment = d.get("sentiment", "netural")
+    sentiment = d.get("sentiment", "neutral")
     weight = d.get("weight", 1)
     if sentiment in sentiment_weights:
         sentiment_weights[sentiment][u] = sentiment_weights[sentiment].get(u, 0) + weight
@@ -84,7 +72,6 @@ social_df = pd.DataFrame({"full_name": df["full_name"]}).assign(
 
 df = df.merge(social_df, on="full_name", how="left")
 
-# --- ניקוי ויצירת פיצ'רים --- #
 df["Days in game"] = pd.to_numeric(df["Days in game"], errors="coerce")
 df["week eliminated"] = pd.to_numeric(df["week eliminated"], errors="coerce")
 df["entered week"] = pd.to_numeric(df["entered week"], errors="coerce")
@@ -96,7 +83,6 @@ df["is_vip"] = df["שם מלא"].astype(str).apply(lambda x: 1 if "VIP" in x or 
 
 df["season_id"] = LabelEncoder().fit_transform(df["עונה"])
 
-# --- ניתוח סנטימנט בעברית עם HeBERT --- #
 print("Loading HeBERT sentiment model...")
 sentiment_pipeline = pipeline("sentiment-analysis", model="avichr/heBERT_sentiment_analysis")
 
@@ -113,7 +99,6 @@ def get_sentiment(text):
 tweets["sentiment"] = tweets["text"].apply(get_sentiment)
 
 
-# --- שיוך ציוצים למתמודדים --- #
 def match_contestant(text, contestant_names):
     for name in contestant_names:
         if pd.isna(name):
@@ -126,7 +111,6 @@ def match_contestant(text, contestant_names):
 tweets["username"] = tweets["text"].apply(lambda x: match_contestant(x, df["full_name"]))
 tweets_filtered = tweets.dropna(subset=["username"])
 
-# --- בניית פיצ'רים מהציוצים --- #
 if not tweets_filtered.empty:
     avg_sentiment = tweets_filtered.groupby("username")["sentiment"].mean().reset_index(name="avg_sentiment")
     mention_counts = tweets_filtered["username"].value_counts().reset_index()
@@ -153,14 +137,13 @@ for col, strength in noise_strength.items():
         df[col] = pd.to_numeric(df[col], errors="coerce")
         df[col] += np.random.normal(0, strength, size=len(df))
 
-# --- בניית מודל דירוג --- #
 features = [
     "גיל", "gender_encoded", "status_encoded", "is_vip",
     "avg_sentiment", "mention_count", "sentiment_std",
     "pagerank", "betweenness", "closeness",
     "in_degree", "out_degree", "total_degree",
     "positive_out_weight", "negative_out_weight",
-    "romantic_out_weight", "netural_out_weight"
+    "romantic_out_weight", "neutral_out_weight"
 ]
 
 df_train = df[df["rank_score"].notna()].copy()
@@ -189,7 +172,6 @@ for train_idx, test_idx in cv.split(X, y, groups):
 
 print("Average nDCG across folds (XGB):", np.mean(scores))
 
-# --- סטאקינג עם LightGBM --- #
 X_train_stacked = X.copy()
 X_train_stacked["xgb_predicted"] = xgb_model.predict(X)
 
@@ -197,35 +179,43 @@ lgbm_model = LGBMRanker(objective="lambdarank", n_estimators=100, random_state=4
 groups_lgb = df_train.groupby("season_id").size().to_list()
 lgbm_model.fit(X_train_stacked, y, group=groups_lgb)
 
-# --- חיזוי על עונה 15 --- #
-season_15_df = df_predict[df_predict["עונה"] == "15"].copy()
-season_15_df = season_15_df[season_15_df["full_name"].isin(nominees)]
+def run_model_on_nominees(nominees, return_top=False):
+    season_15_df = df_predict[df_predict["עונה"] == "15"].copy()
+    season_15_df = season_15_df[season_15_df["full_name"].isin(nominees)]
 
-if not season_15_df.empty:
-    X_alive = season_15_df[features]
-    X_alive = X_alive.copy()
-    X_alive["xgb_predicted"] = xgb_model.predict(X_alive)
+    if not season_15_df.empty:
+        X_alive = season_15_df[features]
+        X_alive = X_alive.copy()
+        X_alive["xgb_predicted"] = xgb_model.predict(X_alive)
 
-    preds_alive = lgbm_model.predict(X_alive)
-    season_15_df["predicted_score"] = preds_alive
+        preds_alive = lgbm_model.predict(X_alive)
+        season_15_df["predicted_score"] = preds_alive
 
-    eliminated_next = season_15_df.loc[season_15_df["predicted_score"].idxmin()]
-    print(f"\nPredicted next to be eliminated in Season 15: {eliminated_next['full_name']}")
+        eliminated_next = season_15_df.loc[season_15_df["predicted_score"].idxmin()]
+        print(f"\nPredicted next to be eliminated in Season 15: {eliminated_next['full_name']}")
 
-    # הצגת תמונה של המודח
-    show_contestant_image(eliminated_next['full_name'])
+        # הצגת תמונה של המודח
+        show_contestant_image(eliminated_next['full_name'])
 
-    print("\nTop 3 candidates at risk:")
-    print(season_15_df.sort_values("predicted_score")[['full_name', 'predicted_score']].head(3))
-else:
-    print("No nominees matched the contestants.")
+        print("\nTop 3 candidates at risk:")
+        print(season_15_df.sort_values("predicted_score")[['full_name', 'predicted_score']].head(3))
+        if return_top:
+            top_risk = season_15_df.sort_values("predicted_score")[['full_name', 'predicted_score']].head(3)
+            top_list = list(zip(top_risk["full_name"], top_risk["predicted_score"]))
+            return {"eliminated": eliminated_next["full_name"], "top_risk": top_list}
+        else:
+            return eliminated_next["full_name"]
+    else:
+        print("No nominees matched the contestants.")
+        return None
 
-# --- גרף תוצאה --- #
-plt.figure(figsize=(10, 6))
-plt.scatter(true_all, preds_all, alpha=0.6)
-plt.xlabel("True Rank Score")
-plt.ylabel("Predicted")
-plt.title("Predicted vs. True Rank Scores (XGB Only)")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+
+if __name__ == "__main__":
+    print("\nEnter the 6 nominees for eviction:")
+    nominees = []
+    while len(nominees) < 6:
+        name = input(f"Nominee {len(nominees) + 1}: ").strip()
+        if name:
+            nominees.append(name)
+
+    run_model_on_nominees(nominees)

@@ -10,8 +10,8 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import matplotlib.pyplot as plt
 
 # Load data
-contestants = pd.read_csv("big_brother_usa.csv")
-tweets = pd.read_csv("big_brother_tweets_USA.csv")
+contestants = pd.read_csv("../data/big_brother_usa.csv")
+tweets = pd.read_csv("../data/big_brother_tweets_USA.csv")
 
 # Create full name
 contestants["full_name"] = contestants["first"].astype(str) + " " + contestants["last"].astype(str)

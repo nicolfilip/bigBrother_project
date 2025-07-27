@@ -29,14 +29,14 @@ Erez Mughrabi,Maor Bruchman,positive,5
 Maor Bruchman,Erez Mughrabi,positive,5
 Maor Bruchman,Erez Isakov,positive,5
 Erez Isakov,Maor Bruchman,positive,5
-Netanel Dahan,Maor Bruchman,netural,5
-Netanel Dahan,Dror Clear,netural,5
+Netanel Dahan,Maor Bruchman,neutral,5
+Netanel Dahan,Dror Clear,neutral,5
 Elaya Hof,Netanel Dahan,positive,5
 Elaya Hof,Anna Sophia Kalman,positive,5
 Yarden Edri,Lauren Gozlan,negative,4
 Lauren Gozlan,Yarden Edri,negative,4
 Shelly Sandrov,Erez Isakov,romantic,6
 Erez Isakov,Shelly Sandrov,positive,4
-Shelly Sandrov,Elaya Hof,negative,2
-Elaya Hof, Shelly Sandrov, negative,6
+Shelly Sandrov,Elaya Hof,positive,2
+Elaya Hof, Shelly Sandrov, positive,2
 

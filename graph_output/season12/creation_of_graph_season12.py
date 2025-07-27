@@ -4,15 +4,21 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
-manual_edges = pd.read_csv("graph_heb.csv")
+# טען את קובץ הקשרים של עונה 12
+season_12_edges = pd.read_csv("graph_eng_12.csv")
 
+# צור את הגרף
 G = nx.DiGraph()
+for _, row in season_12_edges.iterrows():
+    G.add_edge(
+        row["from"].strip(),
+        row["to"].strip(),
+        weight=float(row["weight"]),
+        sentiment=row["sentiment"].strip().lower()
+    )
 
-for _, row in manual_edges.iterrows():
-    G.add_edge(row["from"], row["to"], weight=float(row["weight"]), sentiment=row["sentiment"])
+# צבע לפי סוג הקשר
 
-
-# פונקציה לקביעת צבע לפי סוג הקשר
 def get_edge_color(sentiment):
     if sentiment == "positive":
         return "green"
@@ -21,9 +27,8 @@ def get_edge_color(sentiment):
     elif sentiment == "romantic":
         return "hotpink"
     else:
-        return "orange"  # קשר ניטרלי או רגיל
+        return "orange"  # ניטרלי או לא מוגדר
 
-# יצירת רשימת צבעים לפי סנטימנט
 edge_colors = [get_edge_color(G[u][v].get("sentiment", "neutral")) for u, v in G.edges()]
 
 # ציור הגרף
@@ -42,8 +47,8 @@ nx.draw(
     arrowsize=20
 )
 
-plt.title("גרף קשרים ידני – עונה 15")
-plt.savefig("bigbrother_manual_graph.png", dpi=300)
+plt.title("גרף קשרים ידני – עונה 12")
+plt.savefig("bigbrother_manual_graph_season_12.png", dpi=300)
 plt.show()
 
-print("גרף שמור כקובץ: bigbrother_manual_graph.png")
+print("✅ גרף שמור כקובץ: bigbrother_manual_graph_season_12.png")

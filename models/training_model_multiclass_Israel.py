@@ -12,7 +12,7 @@ from imblearn.over_sampling import RandomOverSampler
 # קריאת קבצים
 contestants = pd.read_csv("big_brother_israel_cleaned.csv", header=0)
 contestants = contestants.loc[:, ~contestants.columns.str.contains('^Unnamed')]
-tweets = pd.read_csv("big_brother_tweets_ISRAEL.csv")
+tweets = pd.read_csv("../data/big_brother_tweets_ISRAEL.csv")
 
 # עיבוד שמות
 contestants["full_name"] = contestants["שם מלא"].astype(str)
