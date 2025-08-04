@@ -91,7 +91,7 @@ def dynamic_weekly_training(df_data, features, title):
 
     print(f"\nResults for {title}:")
     for week, pred, actual in predictions:
-        print(f"Week {week}: {pred} (Actual: {actual}) {'✅' if pred == actual else '❌'}")
+        print(f"Week {week}: {pred} (Actual: {actual})")
 
     print(f"Accuracy: {correct_preds}/{total_preds} = {correct_preds/total_preds:.2%}")
     print(f"Average nDCG: {np.mean(ndcg_scores):.4f}")
