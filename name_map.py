@@ -60,7 +60,7 @@ print("✅ done – graph_output/graph_heb_12.csv")
 df_graph["from"] = df_graph["from"].map(name_map).fillna(df_graph["from"])
 df_graph["to"] = df_graph["to"].map(name_map).fillna(df_graph["to"])
 
-# שמירה
+# save
 df_graph.to_csv("graph_output/graph_heb.csv", index=False, encoding="utf-8-sig")
 
 print("✅ done – graph_output/graph_heb_15.csv")

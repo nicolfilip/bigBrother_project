@@ -4,10 +4,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
-# טען את קובץ הקשרים של עונה 12
 season_12_edges = pd.read_csv("graph_eng_12.csv")
-
-# צור את הגרף
 G = nx.DiGraph()
 for _, row in season_12_edges.iterrows():
     G.add_edge(
@@ -17,7 +14,6 @@ for _, row in season_12_edges.iterrows():
         sentiment=row["sentiment"].strip().lower()
     )
 
-# צבע לפי סוג הקשר
 
 def get_edge_color(sentiment):
     if sentiment == "positive":
@@ -31,7 +27,6 @@ def get_edge_color(sentiment):
 
 edge_colors = [get_edge_color(G[u][v].get("sentiment", "neutral")) for u, v in G.edges()]
 
-# ציור הגרף
 pos = nx.spring_layout(G, seed=42)
 plt.figure(figsize=(16, 10))
 nx.draw(

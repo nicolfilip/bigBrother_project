@@ -20,12 +20,10 @@ for name in alive_contestants:
             valid_contestants.append((name, filename))
             break
 
-# חלון ראשי
 root = tk.Tk()
 root.title("בחירת מועמדים להדחה")
 root.configure(bg="#f5f5f5")
 
-# כותרת
 title_label = tk.Label(root, text="בחר את המועמדים להדחה", font=("Arial", 18, "bold"), bg="#f5f5f5")
 title_label.pack(pady=(20, 10))
 
@@ -51,12 +49,11 @@ def confirm_selection():
         messagebox.showwarning("שגיאה", "יש לבחור לפחות מועמד אחד.")
         return
 
-    # הפעלת המודל עם בקשה להחזרת טופ 3
     result = run_model_on_nominees(list(selected_nominees), return_top=True)
 
     if result:
         eliminated = result["eliminated"]
-        top_risk = result["top_risk"]  # רשימה של (שם, ציון)
+        top_risk = result["top_risk"]
 
         result_win = tk.Toplevel(root)
         result_win.title("תוצאה")
@@ -64,7 +61,6 @@ def confirm_selection():
 
         tk.Label(result_win, text="המודח החזוי הבא:", font=("Arial", 16, "bold"), bg="white").pack(pady=10)
 
-        # תמונת המודח
         try:
             for ext in ['.png', '.jpg', '.jpeg', '.webp']:
                 image_path = os.path.join(image_folder, f"{eliminated}{ext}")
@@ -80,7 +76,6 @@ def confirm_selection():
 
         tk.Label(result_win, text=eliminated, font=("Arial", 14), bg="white").pack(pady=5)
 
-        # טופ 3
         tk.Label(result_win, text="\ntop 3 at risk:", font=("Arial", 12, "bold"), bg="white").pack(pady=(15, 5))
 
         for name, score in top_risk:
@@ -88,7 +83,6 @@ def confirm_selection():
             tk.Label(result_win, text=line, font=("Arial", 11), bg="white").pack()
 
 
-# תמונות + כפתורים
 for name, img_file in valid_contestants:
     try:
         path = os.path.join(image_folder, img_file)
@@ -114,7 +108,6 @@ for name, img_file in valid_contestants:
     except Exception as e:
         print(f"שגיאה בטעינת {name}: {e}")
 
-# כפתור חישוב
 submit_btn = tk.Button(root, text="חשב הדחה", font=("Arial", 14, "bold"), bg="#4CAF50", fg="white",
                        activebackground="#45a049", padx=20, pady=10, command=confirm_selection)
 submit_btn.pack(pady=20)
