@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
 from imblearn.over_sampling import RandomOverSampler
 
-contestants = pd.read_csv("big_brother_israel_cleaned.csv", header=0)
-contestants = contestants.loc[:, ~contestants.columns.str.contains('^Unnamed')]
+contestants = pd.read_csv("../data/big_brother_israel_new_new.csv")
+#contestants = contestants.loc[:, ~contestants.columns.str.contains('^Unnamed')]
 tweets = pd.read_csv("../data/big_brother_tweets_ISRAEL.csv")
 
 contestants["full_name"] = contestants["שם מלא"].astype(str)
@@ -51,10 +51,14 @@ data["status_encoded"] = data["סטטוס"].astype(str).apply(lambda s: 1 if "נ
 data["is_vip"] = data["שם מלא"].astype(str).apply(lambda x: 1 if "VIP" in x or "מהעונה" in x else 0)
 data = data.dropna(subset=["Days in game"])
 data["Days in game"] = pd.to_numeric(data["Days in game"], errors="coerce")
+data["גיל"] = pd.to_numeric(data["גיל"], errors="coerce")
 
 
 data["rank"] = data["Days in game"].rank(ascending=False, method="min")
+data["rank"] = data["rank"].fillna(0)
 data["rank"] = data["rank"].astype(int)
+
+
 
 max_days = data["Days in game"].max()
 
